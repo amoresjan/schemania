@@ -1,7 +1,5 @@
 from tokenizer import tokenizer
 from parse_tokens import *
-from validate import Validate
-from var_table import *
 
 while True:
     lines = input(">> ")
@@ -11,11 +9,6 @@ while True:
 
     output = Parser(tokens)
     print(output.parse_declaration())
-
-
-
-    # v = Validate()
-    # print("Valid : ", v.is_valid_syntax(tokens))
 
     # for token in tokens:
     #     if token[1] == "identifier":
