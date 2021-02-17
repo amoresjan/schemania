@@ -4,20 +4,25 @@ import re
 def tokenizer(string: str):
     data_types = ['INT', 'CHAR', 'BOOL', 'FLOAT']
     # logical_operators = ['AND', 'OR', 'NOT']
-    reserved_words = ['VAR', 'AS', 'START', 'STOP', 'OUTPUT']
     # control_structures = ['IF', 'ELSE', 'WHILE']
 
     token_regex = [
         (re.compile(r"^\b(?:%s)\b" % "|".join(data_types)), "data_types"),
-        (re.compile(r"^\b(?:%s)\b" % "|".join(reserved_words)), "reserved_words"),
+        (re.compile(r"^VAR"), "VAR"),
+        (re.compile(r"^AS"), "AS"),
+        (re.compile(r"^START"), "START"),
+        (re.compile(r"^STOP"), "STOP"),
+        (re.compile(r"^OUTPUT"), "OUTPUT"),
         (re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*"), "identifier"),  # variables
         (re.compile(r"^\d*[.,]?\d"), "numbers"),  # numbers
-        (re.compile(r"^[+*/%-]"), "operators"),  # operators
-        (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
+        # (re.compile(r"^\d*\.\d+"), "float"),  # float
+        # (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
+        # (re.compile(r"^[+*/%-]"), "operators"),  # operators
+        # (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
         (re.compile(r"^="), "assignment"),  # assignment
         (re.compile(r"^,"), "comma"),  # comma
-        (re.compile(r"^\B'\w'\B"), "char"),  # char
-        (re.compile(r'^\B["][\w\s]+["]\B'), "bool"),  # bool
+        # (re.compile(r"^\B'\w'\B"), "char"),  # char
+        # (re.compile(r'^\B["][\w\s]+["]\B'), "bool"),  # bool
     ]
 
     tokens = []
@@ -38,6 +43,6 @@ def tokenizer(string: str):
                 break
 
         if not matched:
-            raise Exception("Invalid syntax")
+            raise Exception("Invalid token")
 
     return tokens

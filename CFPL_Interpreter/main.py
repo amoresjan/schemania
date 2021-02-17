@@ -1,5 +1,5 @@
 from tokenizer import tokenizer
-from parse_tokens import parse_tokens
+from parse_tokens import *
 from validate import Validate
 from var_table import *
 
@@ -9,12 +9,17 @@ while True:
     tokens = tokenizer(lines)
     # print(tokens)
 
+    output = Parser(tokens)
+    print(output.parse_declaration())
+
+
+
     # v = Validate()
     # print("Valid : ", v.is_valid_syntax(tokens))
 
-    for token in tokens:
-        if token[1] == "identifier":
-            print("Variable = ", token[0])
+    # for token in tokens:
+    #     if token[1] == "identifier":
+    #         print("Variable = ", token[0])
 
     # output = parse_tokens(tokens)
     #
@@ -26,8 +31,3 @@ while True:
 # values.append("INT")
 # #
 # print(ValuesTable.val)
-
-# TypeTable.add_var("x", "INT")
-# TypeTable.add_var("y", "INT")
-#
-# print(TypeTable.type)
