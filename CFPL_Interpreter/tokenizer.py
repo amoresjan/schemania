@@ -12,17 +12,18 @@ def tokenizer(string: str):
         (re.compile(r"^AS"), "AS"),
         (re.compile(r"^START"), "START"),
         (re.compile(r"^STOP"), "STOP"),
+        (re.compile(r"^INPUT:"), "INPUT"),
         (re.compile(r"^OUTPUT"), "OUTPUT"),
         (re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*"), "identifier"),  # variables
-        (re.compile(r"^\d*[.,]?\d"), "numbers"),  # numbers
-        # (re.compile(r"^\d*\.\d+"), "float"),  # float
-        # (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
-        # (re.compile(r"^[+*/%-]"), "operators"),  # operators
-        # (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
+        # (re.compile(r"^\d*[.,]?\d"), "numbers"),  # numbers
+        (re.compile(r"^\d*\.\d+"), "float"),  # float
+        (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
+        (re.compile(r"^[+*/%-]"), "operators"),  # operators
+        (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
         (re.compile(r"^="), "assignment"),  # assignment
         (re.compile(r"^,"), "comma"),  # comma
-        # (re.compile(r"^\B'\w'\B"), "char"),  # char
-        # (re.compile(r'^\B["][\w\s]+["]\B'), "bool"),  # bool
+        (re.compile(r"^\B'\w'\B"), "char"),  # char
+        (re.compile(r'^\B["][\w\s]+["]\B'), "bool"),  # bool
     ]
 
     tokens = []

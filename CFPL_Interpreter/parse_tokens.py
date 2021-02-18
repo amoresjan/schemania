@@ -1,3 +1,5 @@
+from var_table import ValuesTable
+
 
 class Parser:
     def __init__(self, tokens):
@@ -25,117 +27,204 @@ class Parser:
         if self.current_token[1] == 'VAR':
             self.advance()
 
-            var_tokens.append(self.current_token[0])
+            # var_tokens.append(self.current_token[0])
+            value = ('null', "un-identified")
+            identifier = self.current_token
+            var_tokens.append((identifier, value))
             self.keep("identifier")
 
-            while self.current_token[1] == 'comma':
-                self.keep("comma")
-                var_tokens.append(self.current_token[0])
-                self.keep("identifier")
+            while self.current_token[1] == 'comma' or self.current_token[1] == 'assignment':
+
+                if self.current_token[1] == 'assignment':
+                    self.keep("assignment")
+
+                    value = self.current_token
+                    var_tokens[len(var_tokens)-1] = (identifier, value)
+                    self.advance()
+
+                else:
+                    self.keep("comma")
+
+                    identifier = self.current_token
+                    var_tokens.append((identifier, value))
+                    self.keep("identifier")
 
             self.keep("AS")
+
+            dataType = self.current_token[0]
+            for i, var in enumerate(var_tokens):
+                iden = var[0]
+                val = var[1]
+
+                if val[1] == "un-identified":
+
+                    if dataType == "INT":
+                        val = (val[0], "integer")
+                    elif dataType == "FLOAT":
+                        val = (val[0], "float")
+                    elif dataType == "CHAR":
+                        val = (val[0], "char")
+                    elif dataType == "BOOL":
+                        val = (val[0], "bool")
+                    var_tokens[i] = (iden, val)
+
+                flag = False
+                if (dataType == "INT" and val[1] == "integer") or (dataType == "FLOAT" and val[1] == "float") or (dataType == "CHAR" and val[1] == "char") or (dataType == "BOOL" and val[1] == "bool"):
+                    flag = True
+
+                if flag:
+                    ValuesTable.add_var(iden[0][0], val)
+                else:
+                    self.keep("error")  # temporary error handler
 
             self.keep("data_types")
 
         return var_tokens
 
+    def parse_assign(self):   # assigns a value to a variable
+        var_identifiers = []
+
+        if self.current_token[1] == "identifier" and ValuesTable.check_var(self.current_token[0]):
+            var_identifiers.append(self.current_token)
+            self.keep("identifier")
+
+            if self.current_token[0] == "=":
+                self.keep("assignment")
+
+                while self.current_token[1] == "identifier":
+                    if not ValuesTable.check_var(self.current_token[0]):
+                        # temporary error handler
+                        self.keep("error identifier not initialize")
+
+                    var_identifiers.append(self.current_token)
+                    self.keep("identifier")
+                    self.keep("assignment")
+
+                token_value = self.tokens[self.pos:]
+                if (token_value[0])[1] == "bool" or (token_value[0])[1] == "char":
+
+                    charORbool = "bool" if (token_value[0])[
+                        1] == "bool" else "char"
+
+                    for identifier in var_identifiers:
+
+                        if (ValuesTable.get_var(identifier[0]))[1] == charORbool:
+                            ValuesTable.add_var(identifier[0], token_value)
+                        else:
+                            if charORbool == "bool":
+                                # temporary error handler
+                                self.keep("error identifier is a char")
+                            else:
+                                # temporary error handler
+                                self.keep("error identifier is a bool")
+
+                else:
+                    value, token = parse_exp(token_value)
+
+                    for identifier in var_identifiers:
+
+                        if (ValuesTable.get_var(identifier[0]))[1] == "integer":
+                            val = (int(value), "integer")
+                        else:
+                            val = (value, "float")
+                        ValuesTable.add_var(identifier[0], val)
+
+        else:
+            # temporary error handler
+            self.keep("error identifier not initialize")
+
+
+precedence = {
+    "-": 1,
+    "+": 1,
+    "*": 2,
+    "/": 2,
+    "%": 2,
+}
+
+
+def add(a, b):
+    return a + b
+
+
+def subtract(a, b):
+    return a - b
+
+
+def multiply(a, b):
+    return a * b
+
+
+def divide(a, b):
+    return a / b
+
+
+def modulo(a, b):
+    return a % b
+
+
+operator_mapping = {
+    "+": add,
+    "-": subtract,
+    "*": multiply,
+    "/": divide,
+    "%": modulo,
+}
+
+
+def parse_exp(tokens: list):    # computes arithmetic expressions with precedence rules
+    operator_stack = []
+    expression_stack = []
+
+    tokens.append((')', "parenthesis"))
+
+    i = 0
+
+    while i < len(tokens):
+        token = tokens[i]
+
+        if token[0] == "(":
+            value, tokens = parse_exp(tokens[i + 1:])
+            i = -1
+
+            expression_stack.append(value)
+
+        elif token[1] == "integer" or token[1] == "float":
+            expression_stack.append(float(token[0]))
+
+        elif token[1] == "identifier":
+            value = ValuesTable.get_var(token[0])
+            expression_stack.append(float(value))
+
+        elif token[1] == "operators":
+            while len(operator_stack) and precedence[token[0]] <= precedence[operator_stack[-1]]:
+                operator = operator_stack.pop()
+                operand_2 = expression_stack.pop()
+                operand_1 = expression_stack.pop()
+
+                value = operator_mapping[operator](operand_1, operand_2)
+                expression_stack.append(value)
+
+            operator_stack.append(token[0])
+
+        elif token[0] == ")":
+            while len(operator_stack):
+                operator = operator_stack.pop()
+                operand_2 = expression_stack.pop()
+                operand_1 = expression_stack.pop()
+
+                value = operator_mapping[operator](operand_1, operand_2)
+                expression_stack.append(value)
+
+            return expression_stack[-1], tokens[i + 1:-1]
+
+        i += 1
 
 # from var_table import *
 # from validate import Validate
 #
-# precedence = {
-#     "-": 1,
-#     "+": 1,
-#     "*": 2,
-#     "/": 2,
-#     "%": 2,
-# }
-#
-#
-# def add(a, b):
-#     return a + b
-#
-#
-# def subtract(a, b):
-#     return a - b
-#
-#
-# def multiply(a, b):
-#     return a * b
-#
-#
-# def divide(a, b):
-#     return a / b
-#
-#
-# def modulo(a, b):
-#     return a % b
-#
-#
-# operator_mapping = {
-#     "+": add,
-#     "-": subtract,
-#     "*": multiply,
-#     "/": divide,
-#     "%": modulo,
-# }
-#
-#
-# def parse_exp(tokens: list):    # computes arithmetic expressions with precedence rules
-#     operator_stack = []
-#     expression_stack = []
-#
-#     tokens.append((')', "parenthesis"))
-#
-#     i = 0
-#
-#     while i < len(tokens):
-#         token = tokens[i]
-#
-#         if token[0] == "(":
-#             value, tokens = parse_exp(tokens[i + 1:])
-#             i = -1
-#
-#             expression_stack.append(value)
-#
-#         elif token[1] == "numbers":
-#             expression_stack.append(float(token[0]))
-#
-#         elif token[1] == "identifier":
-#             value = ValuesTable.find_var(token[0])
-#             expression_stack.append(float(value))
-#
-#         elif token[1] == "operators":
-#             while len(operator_stack) and precedence[token[0]] <= precedence[operator_stack[-1]]:
-#                 operator = operator_stack.pop()
-#                 operand_2 = expression_stack.pop()
-#                 operand_1 = expression_stack.pop()
-#
-#                 value = operator_mapping[operator](operand_1, operand_2)
-#                 expression_stack.append(value)
-#
-#             operator_stack.append(token[0])
-#
-#         elif token[0] == ")":
-#             while len(operator_stack):
-#                 operator = operator_stack.pop()
-#                 operand_2 = expression_stack.pop()
-#                 operand_1 = expression_stack.pop()
-#
-#                 value = operator_mapping[operator](operand_1, operand_2)
-#                 expression_stack.append(value)
-#
-#             return expression_stack[-1], tokens[i + 1:-1]
-#
-#         i += 1
-#
-#
-# def parse_ass(tokens: list):    # assigns a value to a variable
-#     name = tokens[0][0]
-#     value = tokens[2:]
-#     value, tokens = parse_exp(value)
-#
-#     ValuesTable.add_var(name, value)
+
+
 #
 #
 # def parse_declaration(tokens: list):  # only checks a single line for validity
