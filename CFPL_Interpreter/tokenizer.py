@@ -1,7 +1,7 @@
 import re
 
 
-def tokenizer(string: str):
+def tokenizer(string):
     data_types = ['INT', 'CHAR', 'BOOL', 'FLOAT']
     # logical_operators = ['AND', 'OR', 'NOT']
     # control_structures = ['IF', 'ELSE', 'WHILE']
@@ -46,3 +46,4 @@ def tokenizer(string: str):
             raise Exception("Invalid token")
 
     return tokens
+

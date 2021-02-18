@@ -1,26 +1,18 @@
-from tokenizer import tokenizer
+from tokenizer import *
 from parse_tokens import *
 
-while True:
-    lines = input(">> ")
+text = open('text.txt', 'r').read()
+# print(text)
+tokens = tokenizer(text)
+output = Parser(tokens)
+print(output.parse_declarations_block())
 
-    tokens = tokenizer(lines)
-    # print(tokens)
+# while True:
+# lines = input(">> ")
 
-    output = Parser(tokens)
-    print(output.parse_declaration())
+# output = Parser(tokens)
+# print(output.parse_declaration())
 
-    # for token in tokens:
-    #     if token[1] == "identifier":
-    #         print("Variable = ", token[0])
-
-    # output = parse_tokens(tokens)
-    #
-    # if output is not None:
-    #     print(output)
-
-# values = [0]
-# ValuesTable.add_var("x", values)
-# values.append("INT")
-# #
-# print(ValuesTable.val)
+# for token in tokens:
+#     if token[1] == "identifier":
+#         print("Variable = ", token[0])

@@ -1,4 +1,3 @@
-
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -11,13 +10,23 @@ class Parser:
         if self.pos < len(self.tokens):
             self.current_token = self.tokens[self.pos]
         else:
-            self.current_token = None
+            # self.current_token = None
+            self.current_token = ('EOF', 'EOF')  # END OF FILE
 
     def keep(self, token_type):
         if self.current_token[1] == token_type:
             self.advance()
         else:
             raise Exception("Invalid Syntax")
+
+    def parse_declarations_block(self):
+        declaration = []
+
+        while self.current_token[1] == 'VAR':
+            variables = self.parse_declaration()
+            declaration.extend(variables)
+
+        return declaration
 
     def parse_declaration(self):
         var_tokens = []
@@ -27,6 +36,9 @@ class Parser:
 
             var_tokens.append(self.current_token[0])
             self.keep("identifier")
+
+            if self.current_token[1] == 'assignment':
+                pass
 
             while self.current_token[1] == 'comma':
                 self.keep("comma")
@@ -38,7 +50,6 @@ class Parser:
             self.keep("data_types")
 
         return var_tokens
-
 
 # from var_table import *
 # from validate import Validate

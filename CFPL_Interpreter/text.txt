@@ -1,0 +1,1 @@
+VAR abc, b, c AS INT
