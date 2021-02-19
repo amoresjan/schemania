@@ -128,7 +128,7 @@ class Parser:
 
             for identifier in var_identifiers:
                 if (ValuesTable.get_var(identifier[0]))[1] == charORbool:
-                    ValuesTable.add_var(identifier[0], token_value)
+                    ValuesTable.add_var(identifier[0], token_value[0])
                 else:
                     if charORbool == "bool":
                         # temporary error handler
