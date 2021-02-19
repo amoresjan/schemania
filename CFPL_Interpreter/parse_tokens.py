@@ -106,6 +106,10 @@ class Parser:
                     charORbool = "bool" if (token_value[0])[
                         1] == "bool" else "char"
 
+                    if charORbool == "bool":
+                        if (token_value[0])[0] != "TRUE" or (token_value[0])[0] != "FALSE":
+                            raise Exception("Bool value is not TRUE or FALSE")
+
                     for identifier in var_identifiers:
 
                         if (ValuesTable.get_var(identifier[0]))[1] == charORbool:
