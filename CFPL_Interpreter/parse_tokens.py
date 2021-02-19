@@ -73,7 +73,7 @@ class Parser:
                     flag = True
 
                 if flag:
-                    ValuesTable.add_var(iden[0][0], val)
+                    ValuesTable.add_var(iden[0], val)
                 else:
                     self.keep("error")  # temporary error handler
 
@@ -123,7 +123,7 @@ class Parser:
             charORbool = "bool" if (token_value[0])[1] == "bool" else "char"
 
             if charORbool == "bool":
-                if (token_value[0])[0] != "TRUE" or (token_value[0])[0] != "FALSE":
+                if (token_value[0])[0] not in ['"TRUE"', '"FALSE"']:
                     raise Exception("Bool value is not TRUE or FALSE")
 
             for identifier in var_identifiers:
