@@ -59,9 +59,9 @@ class Parser:
                 if val[1] == "un-identified":
 
                     if dataType == "INT":
-                        val = (val[0], "integer")
+                        val = ('0', "integer")
                     elif dataType == "FLOAT":
-                        val = (val[0], "float")
+                        val = ('0.0', "float")
                     elif dataType == "CHAR":
                         val = (val[0], "char")
                     elif dataType == "BOOL":
@@ -84,13 +84,19 @@ class Parser:
     def parse_assign(self):   # assigns a value to a variable
         var_identifiers = []
 
+        value_index = max(index for index, item in enumerate(
+            self.tokens) if item == ("=", "assignment")) + 1
+
+        tempValueholder = self.tokens[value_index:]
+        self.tokens = self.tokens[:value_index]
+
         if self.current_token[1] == "identifier" and ValuesTable.check_var(self.current_token[0]):
             var_identifiers.append(self.current_token)
-            self.keep("identifier")
+            self.advance()
 
-            if self.current_token[0] == "=":
-                self.keep("assignment")
+            self.keep("assignment")
 
+            if self.pos != len(self.tokens):
                 while self.current_token[1] == "identifier":
                     if not ValuesTable.check_var(self.current_token[0]):
                         # temporary error handler
@@ -100,42 +106,46 @@ class Parser:
                     self.keep("identifier")
                     self.keep("assignment")
 
-                token_value = self.tokens[self.pos:]
-                if (token_value[0])[1] == "bool" or (token_value[0])[1] == "char":
+                    if self.pos == len(self.tokens):
+                        break
+        else:
+            self.keep("error identifier not initialize")
 
-                    charORbool = "bool" if (token_value[0])[
-                        1] == "bool" else "char"
+        token_value = []
 
-                    if charORbool == "bool":
-                        if (token_value[0])[0] != "TRUE" or (token_value[0])[0] != "FALSE":
-                            raise Exception("Bool value is not TRUE or FALSE")
+        for token in tempValueholder:
+            if token[1] == "identifier" and ValuesTable.check_var(token[0]):
+                token_value.append(ValuesTable.get_var(token[0]))
+            else:
+                token_value.append(token)
 
-                    for identifier in var_identifiers:
+        if (token_value[0])[1] == "bool" or (token_value[0])[1] == "char":
+            charORbool = "bool" if (token_value[0])[1] == "bool" else "char"
 
-                        if (ValuesTable.get_var(identifier[0]))[1] == charORbool:
-                            ValuesTable.add_var(identifier[0], token_value)
-                        else:
-                            if charORbool == "bool":
-                                # temporary error handler
-                                self.keep("error identifier is a char")
-                            else:
-                                # temporary error handler
-                                self.keep("error identifier is a bool")
+            if charORbool == "bool":
+                if (token_value[0])[0] != "TRUE" or (token_value[0])[0] != "FALSE":
+                    raise Exception("Bool value is not TRUE or FALSE")
 
+            for identifier in var_identifiers:
+                if (ValuesTable.get_var(identifier[0]))[1] == charORbool:
+                    ValuesTable.add_var(identifier[0], token_value)
                 else:
-                    value, token = parse_exp(token_value)
-
-                    for identifier in var_identifiers:
-
-                        if (ValuesTable.get_var(identifier[0]))[1] == "integer":
-                            val = (int(value), "integer")
-                        else:
-                            val = (value, "float")
-                        ValuesTable.add_var(identifier[0], val)
+                    if charORbool == "bool":
+                        # temporary error handler
+                        self.keep("error identifier is a char")
+                    else:
+                        # temporary error handler
+                        self.keep("error identifier is a bool")
 
         else:
-            # temporary error handler
-            self.keep("error identifier not initialize")
+            value, token = parse_exp(token_value)
+
+            for identifier in var_identifiers:
+                if (ValuesTable.get_var(identifier[0]))[1] == "integer":
+                    val = (int(value), "integer")
+                else:
+                    val = (value, "float")
+                ValuesTable.add_var(identifier[0], val)
 
 
 precedence = {
