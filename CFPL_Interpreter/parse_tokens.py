@@ -17,6 +17,13 @@ class Parser:
         else:
             self.current_token = None
 
+    def retreat(self):
+        self.pos -= 1
+        if self.pos >= 0:
+            self.current_token = self.tokens[self.pos]
+        else:
+            self.current_token = None
+
     def keep(self, token_type):
         if self.current_token[1] == token_type:
             self.advance()
@@ -117,7 +124,7 @@ class Parser:
         assign_token = []
         assign_value = []
 
-        input_lines = input(">> Enter Values: ")  # 3,4
+        input_lines = input(">> >>: ")  # 3,4
         input_tokens = tokenizer(input_lines)
 
         for token in input_tokens:
@@ -128,6 +135,7 @@ class Parser:
         assign_token.append(self.current_token)
         assign_token.append(("=", "assignment"))
         assign_token.append(assign_value[i])
+        assign_token.append(("INPUT", "INPUT"))
         self.keep("identifier")
         i += 1
         while self.current_token[1] == 'comma':
@@ -137,25 +145,21 @@ class Parser:
             self.keep("identifier")
             if assign_value[i][1] != 'EOF':
                 assign_token.append(assign_value[i])
+                assign_token.append(("INPUT", "INPUT"))
             else:
                 raise Exception("Expected more inputs")
             i += 1
 
         if (len(assign_value)-1) != i:
-            raise Exception("Expected less inputs")  # input values is greater than identifiers
+            # input values is greater than identifiers
+            raise Exception("Expected less inputs")
 
-        for i in range(0, len(assign_token), 3):
-            input_assign = Parser(assign_token[i:i + 3])
+        for i in range(0, len(assign_token), 4):
+            input_assign = Parser(assign_token[i:i + 4])
             input_assign.parse_assign()
 
     def parse_assign(self):  # assigns a value to a variable
         var_identifiers = []
-
-        value_index = max(index for index, item in enumerate(
-            self.tokens) if item == ("=", "assignment")) + 1
-
-        tempValueholder = self.tokens[value_index:]
-        self.tokens = self.tokens[:value_index]
 
         if self.current_token[1] == "identifier" and ValuesTable.check_var(self.current_token[0]):
             var_identifiers.append(self.current_token)
@@ -163,26 +167,49 @@ class Parser:
 
             self.keep("assignment")
 
-            if self.pos != len(self.tokens):
-                while self.current_token[1] == "identifier":
-                    if not ValuesTable.check_var(self.current_token[0]):
-                        # temporary error handler
-                        self.keep("error identifier not initialize")
+            while self.current_token[1] == "identifier":
+                if not ValuesTable.check_var(self.current_token[0]):
+                    # temporary error handler
+                    self.keep("error identifier not initialize")
 
-                    var_identifiers.append(self.current_token)
-                    self.keep("identifier")
-                    self.keep("assignment")
+                var_identifiers.append(self.current_token)
+                self.keep("identifier")
 
-                    if self.pos == len(self.tokens):
-                        break
+                if self.current_token[1] != "assignment":
+                    self.retreat()
+                    var_identifiers.pop()
+                    break
+
+                self.keep("assignment")
         else:
+            # temporary error handler
             self.keep("error identifier not initialize")
+
+        tempValueholder = []
+        tempValueholder.append(self.current_token)
+        self.advance()
+
+        while True:
+            if self.current_token[1] == "OUTPUT" or self.current_token[1] == "INPUT" or self.current_token[1] == "STOP":
+                break
+            elif self.current_token[1] == "identifier":
+                if (tempValueholder[-1])[1] == "operators" or (tempValueholder[-1])[1] == "parenthesis":
+                    tempValueholder.append(self.current_token)
+                    self.advance()
+                else:
+                    break
+            else:
+                tempValueholder.append(self.current_token)
+                self.advance()
 
         token_value = []
 
         for token in tempValueholder:
-            if token[1] == "identifier" and ValuesTable.check_var(token[0]):
-                token_value.append(ValuesTable.get_var(token[0]))
+            if token[1] == "identifier":
+                if ValuesTable.check_var(token[0]):
+                    token_value.append(ValuesTable.get_var(token[0]))
+                else:
+                    self.keep("error identifier not initialize")
             else:
                 token_value.append(token)
 

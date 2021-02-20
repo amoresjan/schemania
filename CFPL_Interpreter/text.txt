@@ -1,4 +1,5 @@
-VAR x,y AS INT
+VAR x,y,z AS INT
 START
-    INPUT: x
+    INPUT: x,y
+    z = x + y
 STOP
