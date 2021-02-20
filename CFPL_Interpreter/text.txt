@@ -1,0 +1,4 @@
+VAR x,y AS INT
+START
+    INPUT: x
+STOP
