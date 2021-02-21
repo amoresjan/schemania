@@ -124,7 +124,7 @@ class Parser:
         assign_token = []
         assign_value = []
 
-        input_lines = input(">> >>: ")  # 3,4
+        input_lines = input(">>: ")  # 3,4
         input_tokens = tokenizer(input_lines)
 
         for token in input_tokens:
@@ -170,7 +170,7 @@ class Parser:
             while self.current_token[1] == "identifier":
                 if not ValuesTable.check_var(self.current_token[0]):
                     # temporary error handler
-                    self.keep("error identifier not initialize")
+                    raise Exception("error identifier not declared")
 
                 var_identifiers.append(self.current_token)
                 self.keep("identifier")
@@ -183,7 +183,7 @@ class Parser:
                 self.keep("assignment")
         else:
             # temporary error handler
-            self.keep("error identifier not initialize")
+            raise Exception("error identifier not declared")
 
         tempValueholder = []
         tempValueholder.append(self.current_token)
@@ -209,7 +209,7 @@ class Parser:
                 if ValuesTable.check_var(token[0]):
                     token_value.append(ValuesTable.get_var(token[0]))
                 else:
-                    self.keep("error identifier not initialize")
+                    raise Exception("error identifier not initialize")
             else:
                 token_value.append(token)
 
@@ -226,10 +226,10 @@ class Parser:
                 else:
                     if charORbool == "bool":
                         # temporary error handler
-                        self.keep("error identifier is a char")
+                        raise Exception("error identifier is a char")
                     else:
                         # temporary error handler
-                        self.keep("error identifier is a bool")
+                        raise Exception("error identifier is a bool")
 
         else:
             value, token = self.parse_exp(token_value)
