@@ -2,4 +2,5 @@ VAR x,y,z AS INT
 START
     INPUT: x,y
     z = x + y
+    OUTPUT: "z" & z & "123"
 STOP

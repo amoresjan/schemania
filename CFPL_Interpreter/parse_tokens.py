@@ -115,7 +115,8 @@ class Parser:
             self.parse_input()
 
         elif self.current_token[1] == 'OUTPUT':
-            pass  # output statements
+            self.advance()
+            self.parse_output()
 
         elif self.current_token[1] == 'identifier':
             self.parse_assign()
@@ -157,6 +158,23 @@ class Parser:
         for i in range(0, len(assign_token), 4):
             input_assign = Parser(assign_token[i:i + 4])
             input_assign.parse_assign()
+
+    def parse_output(self):
+        output = ''
+
+        while self.current_token[1] != 'STOP':
+            token = self.current_token
+            if token[1] == "ampersand":
+                self.advance()
+                continue
+            elif token[1] == "string":
+                output = output + str(token[0].replace("\"", ""))
+            elif token[1] == "identifier":
+                output = output + str(ValuesTable.get_var(token[0])[0])
+
+            self.advance()
+
+        print(output)
 
     def parse_assign(self):  # assigns a value to a variable
         var_identifiers = []

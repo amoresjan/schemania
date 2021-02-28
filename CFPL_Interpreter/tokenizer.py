@@ -5,6 +5,7 @@ def tokenizer(text):
     data_types = ['INT', 'CHAR', 'BOOL', 'FLOAT']
 
     token_regex = [
+        (re.compile(r'["“”](.*)["“”]'), "string"),  # string
         (re.compile(r"^\b(?:%s)\b" % "|".join(data_types)), "data_types"),
         (re.compile(r"^VAR"), "VAR"),
         (re.compile(r"^AS"), "AS"),
@@ -22,6 +23,7 @@ def tokenizer(text):
         (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
         (re.compile(r"^="), "assignment"),  # assignment
         (re.compile(r"^,"), "comma"),  # comma
+        (re.compile(r"^&"), "ampersand"),  # ampersand
     ]
 
     tokens = []
@@ -32,8 +34,7 @@ def tokenizer(text):
         matched = False
 
         for token, token_type in token_regex:
-            is_same = token.match(text)
-            if is_same:
+            if is_same := token.match(text):
                 matched = True
                 tok = (is_same.group(0), token_type)
                 tokens.append(tok)
@@ -42,7 +43,7 @@ def tokenizer(text):
                 break
 
         if not matched:
-            raise Exception("Invalid token")
+            raise Exception("%s is invalid" % text.lstrip())
 
     if ('STOP', 'STOP') not in tokens:
         tok = ("EOF", "EOF")
