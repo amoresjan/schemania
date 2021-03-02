@@ -1,6 +1,7 @@
 from var_table import ValuesTable
 from operations import *
 from tokenizer import tokenizer
+from constants import RESERVED_KEYWORDS
 
 
 class Parser:
@@ -45,6 +46,9 @@ class Parser:
             self.advance()
 
             value = ('null', "un-identified")
+            if self.current_token[1] in RESERVED_KEYWORDS:
+                raise Exception("Variable %s invalid" %
+                                str(self.current_token[1]))
             identifier = self.current_token
             var_tokens.append((identifier, value))
             self.keep("identifier")
@@ -59,6 +63,9 @@ class Parser:
                 else:
                     self.keep("comma")
                     identifier = self.current_token
+                    if self.current_token[1] in RESERVED_KEYWORDS:
+                        raise Exception("Variable %s invalid" %
+                                        str(self.current_token[1]))
                     var_tokens.append((identifier, value))
                     self.keep("identifier")
 
