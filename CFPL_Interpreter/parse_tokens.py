@@ -164,15 +164,19 @@ class Parser:
 
         while self.current_token[1] != 'STOP':
             token = self.current_token
+
             if token[1] == "ampersand":
                 self.advance()
                 continue
-            elif token[1] == "string":
+            elif token[1] == "string" or token[1] == "boolean":
                 output = output + str(token[0].replace("\"", ""))
+                self.advance()
             elif token[1] == "identifier":
                 output = output + str(ValuesTable.get_var(token[0])[0])
-
-            self.advance()
+                self.advance()
+            elif token[1] == "integer" or token[1] == "float":
+                output = output + str(token[0].replace("\"", ""))
+                self.advance()
 
         print(output)
 

@@ -5,7 +5,6 @@ def tokenizer(text):
     data_types = ['INT', 'CHAR', 'BOOL', 'FLOAT']
 
     token_regex = [
-        (re.compile(r'["“”](.*)["“”]'), "string"),  # string
         (re.compile(r"^\b(?:%s)\b" % "|".join(data_types)), "data_types"),
         (re.compile(r"^VAR"), "VAR"),
         (re.compile(r"^AS"), "AS"),
@@ -17,7 +16,8 @@ def tokenizer(text):
         (re.compile(r"^([1-9]\d*|0)\.([1-9]\d*|0)"), "float"),  # float
         (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
         (re.compile(r"^\B'\w'\B"), "char"),  # char
-        (re.compile(r'^\B["][\w\s]+["]\B'), "bool"),  # bool
+        (re.compile(r'^\B["][True|False]+["]\B'), "boolean"),  # boolean
+        (re.compile(r'^\B["][\w\s]+["]\B'), "string"),  # string
         # SPECIAL CHARACTERS
         (re.compile(r"^[+*/%-]"), "operators"),  # operators
         (re.compile(r"^[()]"), "parenthesis"),  # parenthesis

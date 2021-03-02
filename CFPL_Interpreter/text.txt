@@ -1,6 +1,5 @@
-VAR x,y,z AS INT
+VAR x=10,y=11,z AS INT
 START
-    INPUT: x,y
-    z = x + y
-    OUTPUT: "z" & z & "123"
+    z=x+y
+    OUTPUT: "True" & "False" & "string" & z & 11 & 11.12 & 99+1 
 STOP
