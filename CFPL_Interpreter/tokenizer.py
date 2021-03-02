@@ -16,7 +16,7 @@ def tokenizer(text):
         (re.compile(r"^([1-9]\d*|0)\.([1-9]\d*|0)"), "float"),  # float
         (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
         (re.compile(r"^\B'\w'\B"), "char"),  # char
-        (re.compile(r'^\B["][True|False]+["]\B'), "boolean"),  # boolean
+        (re.compile(r'^\B["][TRUE|FALSE]+["]\B'), "boolean"),  # boolean
         (re.compile(r'^\B["][\w\s]+["]\B'), "string"),  # string
         # SPECIAL CHARACTERS
         (re.compile(r"^[+*/%-]"), "operators"),  # operators
