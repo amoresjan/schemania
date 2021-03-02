@@ -1,5 +1,5 @@
 VAR x=10,y=11,z AS INT
 START
-    VAR=x+y
+    z=x+y
     OUTPUT: "TRUE" & "True" & "string" & z & 11 & 11.12
 STOP
