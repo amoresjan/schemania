@@ -1,6 +1,7 @@
 from var_table import ValuesTable
 from operations import *
 from tokenizer import tokenizer
+from constants import RESERVED_KEYWORDS
 
 
 class Parser:
@@ -45,6 +46,9 @@ class Parser:
             self.advance()
 
             value = ('null', "un-identified")
+            if self.current_token[1] in RESERVED_KEYWORDS:
+                raise Exception("Variable %s invalid" %
+                                str(self.current_token[1]))
             identifier = self.current_token
             var_tokens.append((identifier, value))
             self.keep("identifier")
@@ -59,6 +63,9 @@ class Parser:
                 else:
                     self.keep("comma")
                     identifier = self.current_token
+                    if self.current_token[1] in RESERVED_KEYWORDS:
+                        raise Exception("Variable %s invalid" %
+                                        str(self.current_token[1]))
                     var_tokens.append((identifier, value))
                     self.keep("identifier")
 
@@ -81,14 +88,15 @@ class Parser:
                 elif data_type == "CHAR":
                     val = ('', "char")
                 elif data_type == "BOOL":
-                    val = ('"FALSE"', "bool")
+                    val = ('FALSE', "bool")
                 var_tokens[i] = (iden, val)
 
             flag = False
             if (data_type == "INT" and val[1] == "integer") or (data_type == "FLOAT" and val[1] == "float") or (
                     data_type == "CHAR" and val[1] == "char") or (data_type == "BOOL" and val[1] == "bool"):
                 flag = True
-
+                if val[1] == "bool":
+                    val = (val[0].replace("\"", ""), "bool")
             if flag:
                 ValuesTable.add_var(iden[0], val)
             else:
@@ -115,7 +123,8 @@ class Parser:
             self.parse_input()
 
         elif self.current_token[1] == 'OUTPUT':
-            pass  # output statements
+            self.advance()
+            self.parse_output()
 
         elif self.current_token[1] == 'identifier':
             self.parse_assign()
@@ -129,6 +138,9 @@ class Parser:
 
         for token in input_tokens:
             if not token[1] == "comma":
+                if token[1] == 'bool':
+                    val = (token[0].replace("\"", ""), token[1])
+                    token = val
                 assign_value.append(token)
 
         i = 0
@@ -150,7 +162,7 @@ class Parser:
                 raise Exception("Expected more inputs")
             i += 1
 
-        if (len(assign_value)-1) != i:
+        if (len(assign_value) - 1) != i:
             # input values is greater than identifiers
             raise Exception("Expected less inputs")
 
@@ -158,8 +170,38 @@ class Parser:
             input_assign = Parser(assign_token[i:i + 4])
             input_assign.parse_assign()
 
+    def parse_output(self):
+        output = ''
+
+        while self.current_token[1] != 'STOP':
+            token = self.current_token
+
+            if token[1] == "ampersand":
+                self.advance()
+                continue
+            elif token[1] == "string" or token[1] == "bool":
+                output = output + str(token[0].replace("\"", ""))
+                self.advance()
+            elif token[1] == "identifier":
+                output = output + str(ValuesTable.get_var(token[0])[0])
+                self.advance()
+            elif token[1] == "integer" or token[1] == "float":
+                output = output + str(token[0].replace("\"", ""))
+                self.advance()
+            else:
+                break
+
+        print(output)
+
     def parse_assign(self):  # assigns a value to a variable
         var_identifiers = []
+
+        value_index = self.assignment_index()
+        max_limit = self.assign_limit()
+        tempValueholder = self.tokens[value_index: max_limit]
+        tokens = self.tokens[:value_index]
+        # print(tempValueholder)
+        # print(tokens)
 
         if self.current_token[1] == "identifier" and ValuesTable.check_var(self.current_token[0]):
             var_identifiers.append(self.current_token)
@@ -167,57 +209,38 @@ class Parser:
 
             self.keep("assignment")
 
-            while self.current_token[1] == "identifier":
-                if not ValuesTable.check_var(self.current_token[0]):
-                    # temporary error handler
-                    raise Exception("error identifier not declared")
+            if self.pos != len(tokens):
+                while self.current_token[1] == "identifier":
+                    if not ValuesTable.check_var(self.current_token[0]):
+                        # temporary error handler
+                        self.keep("error identifier not initialize")
 
-                var_identifiers.append(self.current_token)
-                self.keep("identifier")
+                    var_identifiers.append(self.current_token)
+                    self.keep("identifier")
+                    self.keep("assignment")
 
-                if self.current_token[1] != "assignment":
-                    self.retreat()
-                    var_identifiers.pop()
-                    break
+                    if self.pos == len(tokens):
+                        break
 
-                self.keep("assignment")
         else:
-            # temporary error handler
-            raise Exception("error identifier not declared")
-
-        tempValueholder = []
-        tempValueholder.append(self.current_token)
-        self.advance()
-
-        while True:
-            if self.current_token[1] == "OUTPUT" or self.current_token[1] == "INPUT" or self.current_token[1] == "STOP":
-                break
-            elif self.current_token[1] == "identifier":
-                if (tempValueholder[-1])[1] == "operators" or (tempValueholder[-1])[1] == "parenthesis":
-                    tempValueholder.append(self.current_token)
-                    self.advance()
-                else:
-                    break
-            else:
-                tempValueholder.append(self.current_token)
-                self.advance()
+            self.keep("error identifier not initialize")
 
         token_value = []
 
         for token in tempValueholder:
-            if token[1] == "identifier":
-                if ValuesTable.check_var(token[0]):
-                    token_value.append(ValuesTable.get_var(token[0]))
-                else:
-                    raise Exception("error identifier not initialize")
+            if token[1] == "identifier" and ValuesTable.check_var(token[0]):
+                token_value.append(ValuesTable.get_var(token[0]))
             else:
+                if token[1] == "bool":
+                    token = (token[0].replace("\"", ""), "bool")
                 token_value.append(token)
+            self.advance()
 
         if (token_value[0])[1] == "bool" or (token_value[0])[1] == "char":
             charORbool = "bool" if (token_value[0])[1] == "bool" else "char"
 
             if charORbool == "bool":
-                if (token_value[0])[0] not in ['"TRUE"', '"FALSE"']:
+                if (token_value[0])[0] not in ['TRUE', 'FALSE']:
                     raise Exception("Bool value is not TRUE or FALSE")
 
             for identifier in var_identifiers:
@@ -226,12 +249,13 @@ class Parser:
                 else:
                     if charORbool == "bool":
                         # temporary error handler
-                        raise Exception("error identifier is a char")
+                        self.keep("error identifier is a char")
                     else:
                         # temporary error handler
-                        raise Exception("error identifier is a bool")
+                        self.keep("error identifier is a bool")
 
         else:
+            # print(token_value)
             value, token = self.parse_exp(token_value)
 
             for identifier in var_identifiers:
@@ -240,6 +264,8 @@ class Parser:
                 else:
                     val = (value, "float")
                 ValuesTable.add_var(identifier[0], val)
+
+        # self.advance()  # current token is the last token of the line, so advance to next line
 
     def parse_exp(self, tokens):  # computes arithmetic expressions with precedence rules
         operator_stack = []
@@ -288,3 +314,37 @@ class Parser:
                 return expression_stack[-1], tokens[i + 1:-1]
 
             i += 1
+
+    def assign_limit(self):
+        pos = self.assignment_index()
+        while (self.tokens[pos])[1] == 'parenthesis':
+            pos += 1
+
+        pos += 1
+        while (self.tokens[pos])[1] == 'operators':
+            pos += 1
+            if (self.tokens[pos])[1] in ['integer', 'float', 'identifier']:
+                pos += 1
+            if (self.tokens[pos])[1] == 'parenthesis':
+                pos += 1
+                if (self.tokens[pos])[1] in ['integer', 'float', 'identifier']:
+                    pos += 1
+            if (self.tokens[pos])[1] == 'assignment':
+                pos -= 1
+
+        while (self.tokens[pos])[1] == 'parenthesis':
+            pos += 1
+
+        return pos
+
+    def assignment_index(self):
+        pos = self.pos
+        pos += 1
+        while (self.tokens[pos])[1] == 'assignment':
+            pos += 1
+            if (self.tokens[pos])[1] == 'identifier':
+                pos += 1
+            if (self.tokens[pos])[1] in ['OUTPUT', 'operators', 'identifier']:
+                pos -= 1
+
+        return pos

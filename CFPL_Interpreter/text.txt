@@ -1,5 +1,7 @@
-VAR x,y,z AS INT
+VAR x,y,z AS FLOAT
 START
-    INPUT: x,y
-    z = x + y
+    z = 3
+    x = (4-z)
+    y = z
+    OUTPUT: "x = " & x & ", y = " & y & ", z = " & z
 STOP
