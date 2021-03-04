@@ -1,7 +1,7 @@
 VAR x,y,z AS FLOAT
 START
     z = 3
-    x = (4-z)
-    y = z
+    x = ((2*4))+((z*2)/(4-z))
+    y = z+x
     OUTPUT: "x = " & x & ", y = " & y & ", z = " & z
 STOP

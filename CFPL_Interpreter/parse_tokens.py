@@ -271,7 +271,7 @@ class Parser:
         operator_stack = []
         expression_stack = []
 
-        tokens.append((')', "parenthesis"))
+        tokens.append((')', "rparen"))
 
         i = 0
 
@@ -317,7 +317,8 @@ class Parser:
 
     def assign_limit(self):
         pos = self.assignment_index()
-        while (self.tokens[pos])[1] == 'parenthesis':
+
+        while (self.tokens[pos])[1] == 'lparen':
             pos += 1
 
         pos += 1
@@ -325,15 +326,14 @@ class Parser:
             pos += 1
             if (self.tokens[pos])[1] in ['integer', 'float', 'identifier']:
                 pos += 1
-            if (self.tokens[pos])[1] == 'parenthesis':
+            while (self.tokens[pos])[1] == 'lparen':
                 pos += 1
                 if (self.tokens[pos])[1] in ['integer', 'float', 'identifier']:
                     pos += 1
+            while (self.tokens[pos])[1] == 'rparen':
+                pos += 1
             if (self.tokens[pos])[1] == 'assignment':
                 pos -= 1
-
-        while (self.tokens[pos])[1] == 'parenthesis':
-            pos += 1
 
         return pos
 

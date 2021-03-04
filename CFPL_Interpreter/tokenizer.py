@@ -20,7 +20,8 @@ def tokenizer(text):
         (re.compile(r'^\B["].*["]\B'), "string"),  # string
         # SPECIAL CHARACTERS
         (re.compile(r"^[+*/%-]"), "operators"),  # operators
-        (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
+        (re.compile(r"^\("), "lparen"),  # left parenthesis
+        (re.compile(r"^\)"), "rparen"),  # right parenthesis
         (re.compile(r"^="), "assignment"),  # assignment
         (re.compile(r"^,"), "comma"),  # comma
         (re.compile(r"^&"), "ampersand"),  # ampersand
