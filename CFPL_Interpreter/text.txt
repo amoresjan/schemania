@@ -1,7 +1,5 @@
-VAR x,y,z AS FLOAT
+VAR x,i,yt AS INT
 START
-    z = 3
-    x = ((2*4))+((z*2)/(4-z))
-    y = z+x
-    OUTPUT: "x = " & x & ", y = " & y & ", z = " & z
+    x = 4 - 2 + 3
+    OUTPUT: x
 STOP

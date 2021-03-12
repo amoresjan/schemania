@@ -16,3 +16,27 @@ RESERVED_KEYWORDS = {
     'ELSE',
     'WHILE',
 }
+
+VALUES_DATATYPES = {
+    'integer',
+    'float',
+    'char',
+    'bool',
+    'string',
+    'identifier',
+}
+
+RELATIONAL_TOKENTYPE = {
+    'greater_than',
+    'lesser_than',
+    'greater_equal',
+    'lesser_equal',
+    'equal',
+    'not_equal',
+}
+
+LOGICAL_TOKENTYPE = {
+    'AND',
+    'OR',
+    'NOT',
+}

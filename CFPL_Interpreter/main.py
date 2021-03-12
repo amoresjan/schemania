@@ -4,9 +4,9 @@ from var_table import ValuesTable
 text = open('text.txt', 'r').read()
 # print(text)
 tokens = tokenizer(text)
-# print(tokens)
+print(tokens)
 output = Parser(tokens)
-output.parse_program()
+# output.parse_program()
 # print(ValuesTable.val)
 
 # print(output.parse_declarations_block())

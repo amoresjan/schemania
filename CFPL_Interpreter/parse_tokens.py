@@ -1,7 +1,7 @@
 from var_table import ValuesTable
 from operations import *
 from tokenizer import tokenizer
-from constants import RESERVED_KEYWORDS
+from constants import *
 
 
 class Parser:
@@ -29,7 +29,10 @@ class Parser:
         if self.current_token[1] == token_type:
             self.advance()
         else:
-            raise Exception("Invalid Syntax")
+            self.error("Invalid Syntax")
+
+    def error(self, message):
+        raise Exception(message)
 
     def parse_program(self):
         self.parse_declarations_block()
@@ -47,8 +50,7 @@ class Parser:
 
             value = ('null', "un-identified")
             if self.current_token[1] in RESERVED_KEYWORDS:
-                raise Exception("Variable %s invalid" %
-                                str(self.current_token[1]))
+                self.error("Variable %s invalid" % str(self.current_token[1]))
             identifier = self.current_token
             var_tokens.append((identifier, value))
             self.keep("identifier")
@@ -64,8 +66,7 @@ class Parser:
                     self.keep("comma")
                     identifier = self.current_token
                     if self.current_token[1] in RESERVED_KEYWORDS:
-                        raise Exception("Variable %s invalid" %
-                                        str(self.current_token[1]))
+                        self.error("Variable %s invalid" % str(self.current_token[1]))
                     var_tokens.append((identifier, value))
                     self.keep("identifier")
 
@@ -89,18 +90,30 @@ class Parser:
                     val = ('', "char")
                 elif data_type == "BOOL":
                     val = ('FALSE', "bool")
-                var_tokens[i] = (iden, val)
+                # var_tokens[i] = (iden, val)
 
             flag = False
-            if (data_type == "INT" and val[1] == "integer") or (data_type == "FLOAT" and val[1] == "float") or (
-                    data_type == "CHAR" and val[1] == "char") or (data_type == "BOOL" and val[1] == "bool"):
+            if (data_type == "INT" and val[1] == "integer") or \
+                    (data_type == "FLOAT" and (val[1] == "float" or val[1] == "integer")) or \
+                    (data_type == "CHAR" and val[1] == "char") or (data_type == "BOOL" and val[1] == "bool"):
+
                 flag = True
+
                 if val[1] == "bool":
                     val = (val[0].replace("\"", ""), "bool")
+
+                # if token type of value assigned is an integer but datatype is float (e.g. x = 5 AS FLOAT)
+                if data_type == "FLOAT":
+                    val = (float(val[0]), "float")
+
+                # to remove + (unary symbol) since its unnecessary
+                if data_type == "INT":
+                    val = (int(val[0]), "integer")
+
             if flag:
                 ValuesTable.add_var(iden[0], val)
             else:
-                self.keep("error")  # temporary error handler
+                self.error("error")  # temporary error handler
 
     def parse_code_block(self):
         self.keep("START")
@@ -110,7 +123,7 @@ class Parser:
     def parse_statements_block(self):
         while self.current_token[1] != 'STOP':
             if self.current_token[1] == 'EOF':
-                raise Exception("No STOP keyword")
+                self.error("No STOP keyword")
             self.parse_code_statements()
 
     def parse_code_statements(self):
@@ -125,6 +138,10 @@ class Parser:
         elif self.current_token[1] == 'OUTPUT':
             self.advance()
             self.parse_output()
+
+        elif self.current_token[1] == 'IF':
+            self.keep("IF")
+            self.parse_if()
 
         elif self.current_token[1] == 'identifier':
             self.parse_assign()
@@ -159,12 +176,12 @@ class Parser:
                 assign_token.append(assign_value[i])
                 assign_token.append(("INPUT", "INPUT"))
             else:
-                raise Exception("Expected more inputs")
+                self.error("Expected more inputs")
             i += 1
 
         if (len(assign_value) - 1) != i:
             # input values is greater than identifiers
-            raise Exception("Expected less inputs")
+            self.error("Expected less inputs")
 
         for i in range(0, len(assign_token), 4):
             input_assign = Parser(assign_token[i:i + 4])
@@ -193,16 +210,50 @@ class Parser:
 
         print(output)
 
+    def parse_if(self):
+        bool_exp_length = self.assign_limit()
+        bool_exp = self.tokens[self.pos+1: bool_exp_length-1]
+
+        if len(bool_exp) == 0:
+            is_valid = True
+            bool_exp = self.tokens[self.pos+1: bool_exp_length]
+        else:
+            is_valid = self.check_valid_boolean_exp()
+
+        if is_valid:
+            self.keep('lparen')
+            token_values = self.get_values(bool_exp)
+            flag, token = self.parse_logical_exp(token_values)
+            self.keep('rparen')
+        else:
+            self.error("Invalid Syntax")
+
+        if flag:
+            self.parse_code_block()
+            # if current token is ELSE, find end of code block
+            if self.current_token[1] == 'ELSE':
+                self.keep('ELSE')
+                self.keep('START')
+                while self.current_token[1] != 'STOP':
+                    self.advance()
+                self.keep('STOP')
+        else:
+            while self.current_token[1] != 'ELSE':
+                self.advance()
+            self.keep('ELSE')
+            self.parse_code_block()
+
+        if self.current_token[1] == 'ELSE':
+            self.error("ELSE statement should follow the IF statement")
+
     def parse_assign(self):  # assigns a value to a variable
         var_identifiers = []
-
         value_index = self.assignment_index()
         max_limit = self.assign_limit()
         tempValueholder = self.tokens[value_index: max_limit]
         tokens = self.tokens[:value_index]
-        # print(tempValueholder)
-        # print(tokens)
 
+        # get identifiers which will receive the value
         if self.current_token[1] == "identifier" and ValuesTable.check_var(self.current_token[0]):
             var_identifiers.append(self.current_token)
             self.advance()
@@ -213,7 +264,7 @@ class Parser:
                 while self.current_token[1] == "identifier":
                     if not ValuesTable.check_var(self.current_token[0]):
                         # temporary error handler
-                        self.keep("error identifier not initialize")
+                        self.error("error identifier not initialize")
 
                     var_identifiers.append(self.current_token)
                     self.keep("identifier")
@@ -223,40 +274,30 @@ class Parser:
                         break
 
         else:
-            self.keep("error identifier not initialize")
+            self.error("error identifier not initialize")
 
-        token_value = []
+        # assign the value to the receiving identifiers
+        token_value = self.get_values(tempValueholder)
 
-        for token in tempValueholder:
-            if token[1] == "identifier" and ValuesTable.check_var(token[0]):
-                token_value.append(ValuesTable.get_var(token[0]))
-            else:
-                if token[1] == "bool":
-                    token = (token[0].replace("\"", ""), "bool")
-                token_value.append(token)
-            self.advance()
+        if (ValuesTable.get_var((var_identifiers[0])[0]))[1] == "bool":
+            value, token = self.parse_logical_exp(token_value)
 
-        if (token_value[0])[1] == "bool" or (token_value[0])[1] == "char":
-            charORbool = "bool" if (token_value[0])[1] == "bool" else "char"
-
-            if charORbool == "bool":
-                if (token_value[0])[0] not in ['TRUE', 'FALSE']:
-                    raise Exception("Bool value is not TRUE or FALSE")
+            if value is not True and value is not False:
+                self.error("Token value is not of boolean data type")
 
             for identifier in var_identifiers:
-                if (ValuesTable.get_var(identifier[0]))[1] == charORbool:
-                    ValuesTable.add_var(identifier[0], token_value[0])
+                if (ValuesTable.get_var(identifier[0]))[1] == 'bool':
+                    val = (value, "bool")
+                    ValuesTable.add_var(identifier[0], val)
                 else:
-                    if charORbool == "bool":
-                        # temporary error handler
-                        self.keep("error identifier is a char")
-                    else:
-                        # temporary error handler
-                        self.keep("error identifier is a bool")
+                    self.error("Receiving variable is not of BOOL data type")
+
+        elif (ValuesTable.get_var((var_identifiers[0])[0]))[1] == "char":
+            if (len(token_value)) == 1:
+                self.parse_char_assign(var_identifiers, token_value)
 
         else:
-            # print(token_value)
-            value, token = self.parse_exp(token_value)
+            value, token = self.parse_arithmetic_exp(token_value)
 
             for identifier in var_identifiers:
                 if (ValuesTable.get_var(identifier[0]))[1] == "integer":
@@ -265,9 +306,129 @@ class Parser:
                     val = (value, "float")
                 ValuesTable.add_var(identifier[0], val)
 
-        # self.advance()  # current token is the last token of the line, so advance to next line
+    def parse_char_assign(self, var_identifiers, token_value):
+        for identifier in var_identifiers:
+            if (ValuesTable.get_var(identifier[0]))[1] == 'char':
+                if (token_value[0])[1] == 'char':
+                    ValuesTable.add_var(identifier[0], token_value[0])
+                else:
+                    self.error("Value assigned is not of CHAR data type")
+            else:
+                self.error("Receiving variable is not of CHAR data type")
 
-    def parse_exp(self, tokens):  # computes arithmetic expressions with precedence rules
+    def parse_comparison_exp(self, tokens):
+        comparison_stack = []
+        expression_stack = []
+
+        tokens.append((')', "rparen"))
+        i = 0
+
+        while i < len(tokens):
+            token = tokens[i]
+
+            if token[1] == 'lparen':
+                value, tokens = self.parse_comparison_exp(tokens[i + 1:])
+                i = -1
+
+                expression_stack.append(value)
+
+            elif token[1] in VALUES_DATATYPES.difference(set(["identifier"])):
+                if type(token[0]) is str and (token[1] == "integer" or token[1] == "float"):
+                    expression_stack.append(float(token[0]))
+                    i += 1
+                    continue
+                expression_stack.append(token[0])
+
+            elif token[1] == 'identifier':
+                value = ValuesTable.get_var(token[0])
+                if value is (int or float):
+                    value = float(value)
+                expression_stack.append(value)
+
+            elif token[1] in RELATIONAL_TOKENTYPE:
+                while len(comparison_stack):
+                    operator = comparison_stack.pop()
+                    operand_2 = expression_stack.pop()
+                    operand_1 = expression_stack.pop()
+
+                    value = comparison_mapping[operator](operand_1, operand_2)
+                    expression_stack.append(value)
+
+                comparison_stack.append(token[0])
+
+            elif token[1] in LOGICAL_TOKENTYPE.union(set(['rparen'])):
+                while len(comparison_stack):
+                    operator = comparison_stack.pop()
+                    operand_2 = expression_stack.pop()
+                    operand_1 = expression_stack.pop()
+
+                    value = comparison_mapping[operator](operand_1, operand_2)
+                    expression_stack.append(value)
+
+                return expression_stack[-1], tokens[i + 1:-1]
+
+            i += 1
+
+    def parse_logical_exp(self, tokens):
+        expression_stack = []
+        logical_stack = []
+
+        tokens.append((')', "rparen"))
+
+        i = 0
+
+        while i < len(tokens):
+            token = tokens[i]
+
+            if token[1] == "lparen":
+                value, tokens = self.parse_logical_exp(tokens[i + 1:])
+                i = -1
+
+                expression_stack.append(value)
+
+            elif token[1] in VALUES_DATATYPES:
+                index = self.get_logical_index(i, tokens)
+                value, temp_tokens = self.parse_comparison_exp(tokens[i: index])
+                tokens = tokens[index:]
+                i = -1
+                if value == "TRUE":
+                    value = True
+                elif value == "FALSE":
+                    value = False
+
+                expression_stack.append(value)
+
+            elif token[1] in LOGICAL_TOKENTYPE:
+                while len(logical_stack) and logic_precedence[token[0]] <= logic_precedence[logical_stack[-1]]:
+                    operator = logical_stack.pop()
+                    if operator == "NOT":
+                        operand_1 = expression_stack.pop()
+                        value = logical_mapping[operator](operand_1)
+                    else:
+                        operand_2 = expression_stack.pop()
+                        operand_1 = expression_stack.pop()
+                        value = logical_mapping[operator](operand_1, operand_2)
+
+                    expression_stack.append(value)
+
+                logical_stack.append(token[0])
+
+            elif token[1] == 'rparen':
+                while len(logical_stack):
+                    operator = logical_stack.pop()
+                    if operator == "NOT":
+                        operand_1 = expression_stack.pop()
+                        value = logical_mapping[operator](operand_1)
+                    else:
+                        operand_2 = expression_stack.pop()
+                        operand_1 = expression_stack.pop()
+                        value = logical_mapping[operator](operand_1, operand_2)
+                    expression_stack.append(value)
+
+                return expression_stack[-1], tokens[i + 1:-1]
+            i += 1
+
+    def parse_arithmetic_exp(self, tokens):  # computes arithmetic expressions with precedence rules
         operator_stack = []
         expression_stack = []
 
@@ -278,18 +439,14 @@ class Parser:
         while i < len(tokens):
             token = tokens[i]
 
-            if token[0] == "(":
-                value, tokens = self.parse_exp(tokens[i + 1:])
+            if token[1] == "lparen":
+                value, tokens = self.parse_arithmetic_exp(tokens[i + 1:])
                 i = -1
 
                 expression_stack.append(value)
 
             elif token[1] == "integer" or token[1] == "float":
                 expression_stack.append(float(token[0]))
-
-            elif token[1] == "identifier":
-                value = ValuesTable.get_var(token[0])
-                expression_stack.append(float(value))
 
             elif token[1] == "operators":
                 while len(operator_stack) and precedence[token[0]] <= precedence[operator_stack[-1]]:
@@ -302,7 +459,7 @@ class Parser:
 
                 operator_stack.append(token[0])
 
-            elif token[0] == ")":
+            elif token[1] == "rparen":
                 while len(operator_stack):
                     operator = operator_stack.pop()
                     operand_2 = expression_stack.pop()
@@ -315,23 +472,31 @@ class Parser:
 
             i += 1
 
+    # get the last index of a single assignment statement
     def assign_limit(self):
         pos = self.assignment_index()
 
         while (self.tokens[pos])[1] == 'lparen':
             pos += 1
 
-        pos += 1
-        while (self.tokens[pos])[1] == 'operators':
+        if (self.tokens[pos])[1] in VALUES_DATATYPES:
             pos += 1
-            if (self.tokens[pos])[1] in ['integer', 'float', 'identifier']:
+
+        while (self.tokens[pos])[1] in (RELATIONAL_TOKENTYPE.union(set(['operators']), LOGICAL_TOKENTYPE)):
+            pos += 1
+            if (self.tokens[pos])[1] in VALUES_DATATYPES:
                 pos += 1
+
+            # if current token is left parenthesis:
             while (self.tokens[pos])[1] == 'lparen':
                 pos += 1
-                if (self.tokens[pos])[1] in ['integer', 'float', 'identifier']:
+                if (self.tokens[pos])[1] in VALUES_DATATYPES:
                     pos += 1
+
+            # if current token is right parenthesis:
             while (self.tokens[pos])[1] == 'rparen':
                 pos += 1
+
             if (self.tokens[pos])[1] == 'assignment':
                 pos -= 1
 
@@ -344,7 +509,115 @@ class Parser:
             pos += 1
             if (self.tokens[pos])[1] == 'identifier':
                 pos += 1
-            if (self.tokens[pos])[1] in ['OUTPUT', 'operators', 'identifier']:
+            if (self.tokens[pos])[1] in (
+                    RELATIONAL_TOKENTYPE.union(set(['identifier', 'operators']), RESERVED_KEYWORDS)) \
+                    and (self.tokens[pos - 1])[1] != 'assignment':
                 pos -= 1
 
         return pos
+
+    def get_logical_index(self, i, tokens):
+        pos = i
+        while pos < len(tokens):
+            token = tokens[pos]
+            if token[1] in LOGICAL_TOKENTYPE.union(set(['rparen'])):
+                break;
+            pos += 1
+
+        if pos > len(tokens):
+            self.error("Index value is greater than list length")
+
+        return pos
+
+    def check_valid_boolean_exp(self):
+        flag = True
+        count = 0
+        pos = self.pos
+
+        while (self.tokens[pos])[1] == 'lparen':
+            count += 1
+            pos += 1
+
+        if (self.tokens[pos])[1] == 'NOT':  # e.g. (a AND NOT b)
+            pos += 1
+            if (self.tokens[pos])[1] == 'lparen':
+                count += 1
+                pos += 1
+            if (self.tokens[pos])[1] in VALUES_DATATYPES:
+                pos += 1
+            else:
+                self.error("Invalid Syntax")
+            if (self.tokens[pos])[1] == 'rparen':
+                count -= 1
+                pos += 1
+        if (self.tokens[pos])[1] in VALUES_DATATYPES:
+            pos += 1
+
+        if (self.tokens[pos])[1] in LOGICAL_TOKENTYPE.union(RELATIONAL_TOKENTYPE):
+            while (self.tokens[pos])[1] in LOGICAL_TOKENTYPE.union(RELATIONAL_TOKENTYPE):
+                pos += 1
+
+                while (self.tokens[pos])[1] == 'lparen':
+                    count += 1
+                    pos += 1
+
+                if (self.tokens[pos])[1] in VALUES_DATATYPES:
+                    pos += 1
+
+                if (self.tokens[pos])[1] == 'NOT':  # e.g. (a AND NOT b)
+                    pos += 1
+                    if (self.tokens[pos])[1] == 'lparen':
+                        count += 1
+                        pos += 1
+                    if (self.tokens[pos])[1] in VALUES_DATATYPES:
+                        pos += 1
+                    else:
+                        self.error("Invalid Syntax")
+
+                while (self.tokens[pos])[1] == 'rparen':
+                    count -= 1
+                    pos += 1
+
+        while (self.tokens[pos])[1] == 'rparen':
+            count -= 1
+            pos += 1
+
+        # balancing parenthesis
+        if count != 0:
+            flag = False
+
+        return flag
+
+    def get_values(self, expression):
+        index = 0
+        size = len(expression)
+        token_value = []
+
+        while index < size:
+            token = expression[index]
+
+            if token[1] == "identifier" and ValuesTable.check_var(token[0]):
+                token_value.append(ValuesTable.get_var(token[0]))
+
+            else:
+                if token[1] == "bool":
+                    token = (token[0].replace("\"", ""), "bool")
+
+                # checking for UNARY OPERATORS
+                if token[1] == 'operators':
+                    if (len(expression) > 2 and ((expression[index - 1])[1] == 'operators' or
+                                                      (expression[index - 1]) == (expression[size - 1]))) \
+                            or (len(expression) == 2 and index == 0):
+                        if token[0] == '-':
+                            temp = expression[index + 1]
+                            temp_val = ValuesTable.get_var(temp[0])
+                            token = ((float(temp_val[0]) * -1), temp_val[1])
+                            index += 1
+                            self.advance()
+
+                token_value.append(token)
+
+            self.advance()
+            index += 1
+
+        return token_value

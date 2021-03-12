@@ -12,19 +12,30 @@ def tokenizer(text):
         (re.compile(r"^STOP"), "STOP"),
         (re.compile(r"^INPUT:"), "INPUT"),
         (re.compile(r"^OUTPUT:"), "OUTPUT"),
+        (re.compile(r"^AND"), "AND"),
+        (re.compile(r"^OR"), "OR"),
+        (re.compile(r"^NOT"), "NOT"),
+        (re.compile(r"^IF"), "IF"),
+        (re.compile(r"^ELSE"), "ELSE"),
         (re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*"), "identifier"),  # variables
-        (re.compile(r"^([1-9]\d*|0)\.([1-9]\d*|0)"), "float"),  # float
-        (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
+        (re.compile(r"^([-|+]?([1-9]\d*|0)\.([1-9]\d*|0))"), "float"),  # float
+        (re.compile(r"^([-|+]?([1-9]\d*|0))"), "integer"),  # integer
         (re.compile(r"^\B'\w'\B"), "char"),  # char
         (re.compile(r'^\B["][TRUE|FALSE]+["]\B'), "bool"),  # bool
-        (re.compile(r'^\B["].*["]\B'), "string"),  # string
+        (re.compile(r'^\B"([^"]*)"\B'), "string"),  # string
         # SPECIAL CHARACTERS
         (re.compile(r"^[+*/%-]"), "operators"),  # operators
         (re.compile(r"^\("), "lparen"),  # left parenthesis
         (re.compile(r"^\)"), "rparen"),  # right parenthesis
-        (re.compile(r"^="), "assignment"),  # assignment
         (re.compile(r"^,"), "comma"),  # comma
         (re.compile(r"^&"), "ampersand"),  # ampersand
+        (re.compile(r"^>="), "greater_equal"),  # ampersand
+        (re.compile(r"^<="), "lesser_equal"),  # ampersand
+        (re.compile(r"^=="), "equal"),  # ampersand
+        (re.compile(r"^<>"), "not_equal"),  # ampersand
+        (re.compile(r"^>"), "greater_than"),  # ampersand
+        (re.compile(r"^<"), "lesser_than"),  # ampersand
+        (re.compile(r"^="), "assignment"),  # assignment
     ]
 
     tokens = []
@@ -46,7 +57,7 @@ def tokenizer(text):
         if not matched:
             raise Exception("%s is invalid" % text.split("\n")[0])
 
-    if ('STOP', 'STOP') not in tokens:
+    if tokens[-1] != ('STOP', 'STOP'):
         tok = ("EOF", "EOF")
         tokens.append(tok)
     # else:
