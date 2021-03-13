@@ -1,5 +1,19 @@
-VAR x,i,yt AS INT
+VAR x AS INT
+VAR num AS INT
 START
-    x = 4 - 2 + 3
-    OUTPUT: x
+    num = 0
+    x = 0
+    WHILE (num < 5)
+        START
+            num = num + 1
+            IF(num==3)
+                START
+                    INPUT: x
+                STOP
+            WHILE (x<10)
+                START
+                    x = x + 2
+                STOP
+        STOP
+    OUTPUT: "num = " & num & ", x = " & x
 STOP

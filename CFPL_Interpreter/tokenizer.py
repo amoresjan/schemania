@@ -17,6 +17,7 @@ def tokenizer(text):
         (re.compile(r"^NOT"), "NOT"),
         (re.compile(r"^IF"), "IF"),
         (re.compile(r"^ELSE"), "ELSE"),
+        (re.compile(r"^WHILE"), "WHILE"),
         (re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*"), "identifier"),  # variables
         (re.compile(r"^([-|+]?([1-9]\d*|0)\.([1-9]\d*|0))"), "float"),  # float
         (re.compile(r"^([-|+]?([1-9]\d*|0))"), "integer"),  # integer
