@@ -188,8 +188,6 @@ class Parser:
             elif token[1] == "integer" or token[1] == "float":
                 output = output + str(token[0].replace("\"", ""))
                 self.advance()
-            else:
-                break
 
         print(output)
 
