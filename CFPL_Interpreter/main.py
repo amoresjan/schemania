@@ -7,6 +7,6 @@ tokens = tokenizer(text)
 # print(tokens)
 output = Parser(tokens)
 output.parse_program()
-print(ValuesTable.val)
+
 
 # print(output.parse_declarations_block())

@@ -16,11 +16,12 @@ def tokenizer(text):
         (re.compile(r"^([1-9]\d*|0)\.([1-9]\d*|0)"), "float"),  # float
         (re.compile(r"^([1-9]\d*|0)"), "integer"),  # integer
         (re.compile(r"^\B'\w'\B"), "char"),  # char
-        (re.compile(r'^\B["][TRUE|FALSE]+["]\B'), "boolean"),  # boolean
-        (re.compile(r'^\B["][\w\s]+["]\B'), "string"),  # string
+        (re.compile(r'^\B["][TRUE|FALSE]+["]\B'), "bool"),  # bool
+        (re.compile(r'^\B["].*["]\B'), "string"),  # string
         # SPECIAL CHARACTERS
         (re.compile(r"^[+*/%-]"), "operators"),  # operators
-        (re.compile(r"^[()]"), "parenthesis"),  # parenthesis
+        (re.compile(r"^\("), "lparen"),  # left parenthesis
+        (re.compile(r"^\)"), "rparen"),  # right parenthesis
         (re.compile(r"^="), "assignment"),  # assignment
         (re.compile(r"^,"), "comma"),  # comma
         (re.compile(r"^&"), "ampersand"),  # ampersand
@@ -43,7 +44,7 @@ def tokenizer(text):
                 break
 
         if not matched:
-            raise Exception("%s is invalid" % text.lstrip())
+            raise Exception("%s is invalid" % text.split("\n")[0])
 
     if ('STOP', 'STOP') not in tokens:
         tok = ("EOF", "EOF")

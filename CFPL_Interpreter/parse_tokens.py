@@ -175,7 +175,7 @@ class Parser:
             if token[1] == "ampersand":
                 self.advance()
                 continue
-            elif token[1] == "string" or token[1] == "boolean":
+            elif token[1] == "string" or token[1] == "bool":
                 output = output + str(token[0].replace("\"", ""))
                 self.advance()
             elif token[1] == "identifier":
