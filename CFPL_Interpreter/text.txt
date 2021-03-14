@@ -1,19 +1,27 @@
 VAR x AS INT
-VAR num AS INT
+VAR num, count=0 AS INT
 START
-    num = 0
+    num = 10
     x = 0
-    WHILE (num < 5)
+    WHILE (num > 5)
         START
-            num = num + 1
-            IF(num==3)
+            num = num - 1
+        STOP
+    IF (num == 5)
+        START
+            x = num
+            IF (x >= 5)
                 START
-                    INPUT: x
+                    WHILE (count < num)
+                        START
+                            x = x + 1
+                            count = count + 2
+                        STOP
                 STOP
-            WHILE (x<10)
+            ELSE
                 START
-                    x = x + 2
+                    x = x / num
                 STOP
         STOP
-    OUTPUT: "num = " & num & ", x = " & x
+    OUTPUT: "num = " & num & ", x = " & x & ", count = " & count
 STOP

@@ -229,6 +229,8 @@ class Parser:
         flag, token = self.parse_logical_exp(token_values)
         self.keep('rparen')
 
+        stop_index = self.get_stop_index()
+
         if flag:
             self.parse_code_block()
 
@@ -240,9 +242,10 @@ class Parser:
                     self.advance()
                 self.keep('STOP')
         else:
-            while self.current_token[1] != 'STOP':
+            while self.pos != stop_index:
                 self.advance()
             self.keep('STOP')
+
             if self.current_token[1] == 'ELSE':
                 self.keep('ELSE')
                 self.parse_code_block()
@@ -596,7 +599,6 @@ class Parser:
             if (self.tokens[pos])[1] == 'STOP':
                 start_stack.pop()
                 stop_index = pos
-
         return stop_index
 
     def get_values(self, expression):
