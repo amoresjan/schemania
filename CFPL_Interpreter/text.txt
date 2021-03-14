@@ -1,5 +1,7 @@
-VAR x=10,y=11,z AS INT
+VAR x,y,z AS FLOAT
 START
-    z=x+y
-    OUTPUT: "TRUE" & "True" & "string" & z & 11 & 11.12
+    z = 3
+    x = ((2*4))+((z*2)/(4-z))
+    y = z+x
+    OUTPUT: "x = " & x & ", y = " & y & ", z = " & z
 STOP
